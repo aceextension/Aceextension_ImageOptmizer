@@ -50,24 +50,26 @@ class MediaPlugin
             $relativeFileNameProp->setAccessible(true);
             $requestedFile = $relativeFileNameProp->getValue($subject);
 
-            if ($requestedFile && preg_match('/\.webp$/i', (string)$requestedFile)) {
+            $format = $this->imageHelper->getOutputFormat();
+
+            if ($requestedFile && preg_match('/\.(' . $format . ')$/i', (string)$requestedFile)) {
                 $directoryPubProp = $reflection->getProperty('directoryPub');
                 $directoryPubProp->setAccessible(true);
                 $directoryPub = $directoryPubProp->getValue($subject);
 
-                $originalWebpPath = preg_replace('#/cache/[a-z0-9]+/#i', '/', (string)$requestedFile);
+                $originalModernPath = preg_replace('#/cache/[a-z0-9]+/#i', '/', (string)$requestedFile);
 
-                if ($directoryPub->isFile($originalWebpPath)) {
-                    // Source is natively WebP, let Magento generate WebP cache directly
+                if ($directoryPub->isFile($originalModernPath)) {
+                    // Source is natively WebP/AVIF, let Magento generate cache directly
                     return $proceed();
                 }
 
-                $originalPngPath = preg_replace('/\.webp$/i', '.png', $originalWebpPath);
+                $originalPngPath = preg_replace('/\.(' . $format . ')$/i', '.png', $originalModernPath);
                 if ($directoryPub->isFile($originalPngPath)) {
-                    $sourceFile = preg_replace('/\.webp$/i', '.png', (string)$requestedFile);
+                    $sourceFile = preg_replace('/\.(' . $format . ')$/i', '.png', (string)$requestedFile);
                 } else {
                     // Fallback to JPG
-                    $sourceFile = preg_replace('/\.webp$/i', '.jpg', (string)$requestedFile);
+                    $sourceFile = preg_replace('/\.(' . $format . ')$/i', '.jpg', (string)$requestedFile);
                 }
 
                 // Swap the relativeFileName to source file to let Magento generate the cache intermediate first
@@ -77,21 +79,28 @@ class MediaPlugin
                 $response = $proceed();
 
                 $sourceAbsolutePath = $directoryPub->getAbsolutePath($sourceFile);
-                $webpAbsolutePath = $directoryPub->getAbsolutePath($requestedFile);
+                $modernAbsolutePath = $directoryPub->getAbsolutePath($requestedFile);
 
                 if (file_exists($sourceAbsolutePath)) {
-                    // Convert the generated JPG/PNG to WebP
-                    if ($this->imageHelper->convertToWebp($sourceAbsolutePath, $webpAbsolutePath)) {
-                        // Update the response to serve the newly created WebP file
-                        if ($response instanceof HttpResponse && method_exists($response, 'setFilePath')) {
-                            $response->setFilePath($webpAbsolutePath);
+                    // Convert the generated JPG/PNG to the chosen modern format
+                    $converted = false;
+                    if ($format === 'avif') {
+                        $converted = $this->imageHelper->convertToAvif($sourceAbsolutePath, $modernAbsolutePath);
+                    } else {
+                        $converted = $this->imageHelper->convertToWebp($sourceAbsolutePath, $modernAbsolutePath);
+                    }
 
-                            // Remove existing Content-Type header and set it to image/webp
+                    if ($converted) {
+                        // Update the response to serve the newly created file
+                        if ($response instanceof HttpResponse && method_exists($response, 'setFilePath')) {
+                            $response->setFilePath($modernAbsolutePath);
+
+                            // Remove existing Content-Type header and set it to image/$format
                             $response->clearHeader('Content-Type');
-                            $response->setHeader('Content-Type', 'image/webp');
+                            $response->setHeader('Content-Type', 'image/' . $format);
                         }
                     } else {
-                        $this->imageHelper->log("Failed to convert {$sourceAbsolutePath} to WebP.");
+                        $this->imageHelper->log("Failed to convert {$sourceAbsolutePath} to {$format}.");
                     }
                 } else {
                     $this->imageHelper->log("Generated source file not found: {$sourceAbsolutePath}");

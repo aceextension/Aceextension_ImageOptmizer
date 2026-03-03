@@ -26,7 +26,8 @@ class AssetImagePlugin
     public function afterGetUrl(Image $subject, string $result): string
     {
         if ($this->imageHelper->isWebpReplacementEnabled() && !str_contains($result, '/placeholder/')) {
-            return (string)preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $result);
+            $format = $this->imageHelper->getOutputFormat();
+            return (string)preg_replace('/\.(jpg|jpeg|png)$/i', '.' . $format, $result);
         }
         return $result;
     }

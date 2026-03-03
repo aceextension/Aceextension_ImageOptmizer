@@ -58,3 +58,9 @@ The module utilizes a **Lazy Materialization** pattern:
 
 ## 📄 License
 Copyright (c) 2019 Aceextensions Extensions (http://aceextensions.com)
+
+---
+
+## 🗺️ To-Do / Roadmap
+- **AVIF Alternative for Catalog Images**: Expand the "Replace Catalog Images with WebP on Frontend" configuration to allow store owners to choose **AVIF** as the preferred format for frontend output, providing an extra layer of next-generation compression as an alternative to WebP for standard `.jpg` and `.png` catalog images.
+

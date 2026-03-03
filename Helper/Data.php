@@ -62,6 +62,17 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get the preferred output format (webp or avif)
+     *
+     * @return string
+     */
+    public function getOutputFormat(): string
+    {
+        $format = $this->scopeConfig->getValue('ace_image_optimizer/general/catalog_output_format');
+        return $format === 'avif' ? 'avif' : 'webp';
+    }
+
+    /**
      * Custom logging
      *
      * @param string $message
