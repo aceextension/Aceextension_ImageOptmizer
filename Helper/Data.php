@@ -20,6 +20,11 @@ use Magento\Framework\App\Request\Http as HttpRequest;
 class Data extends AbstractHelper
 {
     /**
+     * @var string[]
+     */
+    private static array $loggedMessages = [];
+
+    /**
      * @param Context $context
      * @param HttpRequest $request
      */
@@ -88,11 +93,41 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Log a message only once per request to avoid noise
+     *
+     * @param string $message
+     * @return void
+     */
+    public function logErrorOnce(string $message): void
+    {
+        if (in_array($message, self::$loggedMessages, true)) {
+            return;
+        }
+
+        self::$loggedMessages[] = $message;
+        $this->_logger->error('[Aceextension_ImageOptmizer] ' . $message);
+    }
+
+    /**
      * @return string[]
      */
     public function getAllowedExtensions(): array
     {
-        return ['svg', 'webp', 'avif'];
+        $allowed = ['webp', 'avif'];
+        if ($this->isSvgUploadEnabled()) {
+            $allowed[] = 'svg';
+        }
+        return $allowed;
+    }
+
+    /**
+     * Check if SVG uploads are enabled
+     * 
+     * @return bool
+     */
+    public function isSvgUploadEnabled(): bool
+    {
+        return $this->scopeConfig->isSetFlag('ace_image_optimizer/general/enable_svg');
     }
 
     /**
@@ -160,7 +195,8 @@ class Data extends AbstractHelper
      */
     public function convertToAvif(string $sourcePath, string $destinationPath, int $quality = 30): bool
     {
-        if (!function_exists('imageavif') || !file_exists($sourcePath)) {
+        if (!function_exists('imageavif') || !function_exists('imagecreatefromavif') || !file_exists($sourcePath)) {
+            $this->log('AVIF conversion not supported or source missing: ' . $sourcePath);
             return false;
         }
 
@@ -207,5 +243,27 @@ class Data extends AbstractHelper
         return str_contains($requestUri, 'get.php') ||
             str_contains($scriptName, 'get.php') ||
             str_contains($phpSelf, 'get.php');
+    }
+
+    /**
+     * Rewrite catalog image URL to modern format
+     *
+     * @param string $url
+     * @return string
+     */
+    public function rewriteImageUrl(string $url): string
+    {
+        if (!$this->isWebpReplacementEnabled() || str_contains($url, '/placeholder/')) {
+            return $url;
+        }
+
+        $format = $this->getOutputFormat();
+
+        // Idempotence check - don't rewrite if it's already the target format
+        if (preg_match('/\.(' . $format . ')$/i', $url)) {
+            return $url;
+        }
+
+        return (string)preg_replace('/\.(jpg|jpeg|png)$/i', '.' . $format, $url);
     }
 }

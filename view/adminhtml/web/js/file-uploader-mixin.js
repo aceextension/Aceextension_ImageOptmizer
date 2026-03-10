@@ -12,7 +12,10 @@ define([
                 this._super();
 
                 if (this.allowedExtensions) {
-                    var additional = ['webp', 'svg', 'avif'];
+                    var additional = ['webp', 'avif'];
+                    if (window.aceImageOptmizerConfig && window.aceImageOptmizerConfig.svgEnabled) {
+                        additional.push('svg');
+                    }
                     var current = this.allowedExtensions.split(' ');
 
                     additional.forEach(function (ext) {

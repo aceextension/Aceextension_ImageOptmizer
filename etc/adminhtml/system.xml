@@ -22,10 +22,18 @@
                 <field id="imagemagick_warning" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <frontend_model>Aceextension\ImageOptmizer\Block\Adminhtml\System\Config\ImageMagickWarning</frontend_model>
                 </field>
+                <field id="diagnostics" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <frontend_model>Aceextension\ImageOptmizer\Block\Adminhtml\System\Config\Diagnostics</frontend_model>
+                </field>
                 <field id="enabled" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Image Optimizer Module</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Master switch to enable or disable the SVG, WebP, and AVIF upload capabilities.<br/><strong style="color:#e22626;">Note: ImageMagick should be enabled as the default image adapter for best results with modern formats.</strong>]]></comment>
+                    <comment><![CDATA[Master switch to enable or disable the Image Optimizer capabilities.<br/><strong style="color:#e22626;">Note: ImageMagick should be enabled as the default image adapter for best results with modern formats.</strong>]]></comment>
+                </field>
+                <field id="enable_svg" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable SVG Uploads</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Warning: Allowing SVG uploads can pose a security risk (XSS) if files are not sanitized. Only enable this if you logically trust your admin users or securely proxy these assets.]]></comment>
                 </field>
                 <field id="replace_catalog_images_with_webp" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Replace Catalog Images with Modern Formats</label>

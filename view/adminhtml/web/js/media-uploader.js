@@ -41,8 +41,7 @@ define([
                 targetElement = this.element.find('.fileinput-button.form-buttons')[0],
                 uploadUrl = $(uploaderElement).attr('data-url'),
                 fileId = null,
-                // MODIFIED: Added webp, svg, avif
-                allowedExt = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg', 'avif'],
+                allowedExt = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif'],
                 allowedResize = false,
                 options = {
                     proudlyDisplayPoweredByUppy: false,
@@ -62,6 +61,10 @@ define([
                 $(uploaderElement).closest('.fileinput-button.form-buttons')
                     .find('.uppy-Dashboard-browse').trigger('click');
             });
+
+            if (window.aceImageOptmizerConfig && window.aceImageOptmizerConfig.svgEnabled) {
+                allowedExt.push('svg');
+            }
 
             const uppy = new Uppy.Uppy({
                 autoProceed: true,

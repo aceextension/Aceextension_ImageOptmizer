@@ -44,6 +44,7 @@ class MediaPlugin
         }
 
         try {
+            // Reflection on Magento 2.4.x Media App to manipulate cache generation paths natively
             $reflection = new \ReflectionClass(\Magento\MediaStorage\App\Media::class);
 
             $relativeFileNameProp = $reflection->getProperty('relativeFileName');
@@ -86,6 +87,11 @@ class MediaPlugin
                     $converted = false;
                     if ($format === 'avif') {
                         $converted = $this->imageHelper->convertToAvif($sourceAbsolutePath, $modernAbsolutePath);
+                        if (!$converted) {
+                            $this->imageHelper->logErrorOnce("AVIF conversion failed or unsupported, falling back to WebP for: {$sourceAbsolutePath}");
+                            $converted = $this->imageHelper->convertToWebp($sourceAbsolutePath, $modernAbsolutePath);
+                            $format = 'webp'; // Adjust format for content-type headers
+                        }
                     } else {
                         $converted = $this->imageHelper->convertToWebp($sourceAbsolutePath, $modernAbsolutePath);
                     }
@@ -103,7 +109,7 @@ class MediaPlugin
                         $this->imageHelper->log("Failed to convert {$sourceAbsolutePath} to {$format}.");
                     }
                 } else {
-                    $this->imageHelper->log("Generated source file not found: {$sourceAbsolutePath}");
+                    $this->imageHelper->logErrorOnce("Generated source file not found: {$sourceAbsolutePath}");
                 }
 
                 // Restore the original requested filename state for the subject
@@ -112,7 +118,7 @@ class MediaPlugin
                 return $response;
             }
         } catch (\Exception $e) {
-            $this->imageHelper->log("MediaPlugin exception: " . $e->getMessage());
+            $this->imageHelper->logErrorOnce("MediaPlugin exception: " . $e->getMessage());
             return $proceed();
         }
 

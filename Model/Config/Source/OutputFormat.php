@@ -21,9 +21,16 @@ class OutputFormat implements OptionSourceInterface
      */
     public function toOptionArray(): array
     {
-        return [
+        $options = [
             ['value' => 'webp', 'label' => __('WebP (Recommended)')],
-            ['value' => 'avif', 'label' => __('AVIF (Next-Gen Compression)')],
         ];
+
+        if (function_exists('imageavif') && function_exists('imagecreatefromavif')) {
+            $options[] = ['value' => 'avif', 'label' => __('AVIF (Next-Gen Compression)')];
+        } else {
+            $options[] = ['value' => 'avif', 'label' => __('AVIF (Not Supported by server, will fallback)')];
+        }
+
+        return $options;
     }
 }

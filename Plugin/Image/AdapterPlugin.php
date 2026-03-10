@@ -20,21 +20,26 @@ class AdapterPlugin
      * Bypassing image processing for SVG and injecting modern format support
      *
      * @param AdapterInterface $subject
+     * @param callable $proceed
      * @param string|null $filename
      * @return void
      */
-    public function beforeOpen(AdapterInterface $subject, ?string $filename): void
+    public function aroundOpen(AdapterInterface $subject, callable $proceed, ?string $filename): void
     {
         $this->injectModernFormatSupport($subject);
 
         if (!$filename) {
+            $proceed($filename);
             return;
         }
 
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         if ($this->imageHelper->isVector($extension)) {
             // Prevent GD/Imagick from trying to open SVG as a raster image
+            return;
         }
+
+        $proceed($filename);
     }
 
     /**
@@ -95,6 +100,7 @@ class AdapterPlugin
     private function injectModernFormatSupport(AdapterInterface $subject): void
     {
         try {
+            // Magento 2.4.x GD2 Adapter Reflection
             if ($subject instanceof \Magento\Framework\Image\Adapter\Gd2) {
                 $reflection = new \ReflectionClass(\Magento\Framework\Image\Adapter\Gd2::class);
                 if ($reflection->hasProperty('_callbacks')) {
@@ -116,7 +122,7 @@ class AdapterPlugin
                 // but we can ensure they are in supported list via getSupportedFormats
             }
         } catch (\Exception $e) {
-            // Silence is golden
+            $this->imageHelper->logErrorOnce("AdapterPlugin reflection exception: " . $e->getMessage());
         }
     }
 }

@@ -1,8 +1,8 @@
 {
-    "name": "aceextensions/module-imageoptimizer",
+    "name": "aceextension/module-imageoptimizer",
     "description": "Image Optimizer module for Magento 2. Adds WebP and AVIF support and enforces ImageMagick.",
     "type": "magento2-module",
-    "version": "1.0.4",
+    "version": "1.1.0",
     "license": [
         "OSL-3.0",
         "AFL-3.0"
